@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Manager</title>
+</head>
+<body>
+  <h1>Welcome to Attendance Manager</h1>
+  <% if(user) { %>
+    <p>Hello, <%= user.username %>! <a href="/dashboard">Dashboard</a> | <a href="/logout">Logout</a></p>
+  <% } else { %>
+    <a href="/login">Login</a> | <a href="/register">Register</a>
+  <% } %>
+</body>
+</html>
