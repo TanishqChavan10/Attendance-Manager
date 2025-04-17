@@ -1,0 +1,295 @@
+/* Dashboard.css - Additional styling fixes for dashboard components */
+
+/* Dashboard Container Fixes */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
+  gap: var(--spacing-xl);
+}
+
+/* Dashboard Header Fixes */
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--gray-light);
+}
+
+/* Dashboard Stats Grid Fixes */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+/* Card Component Fixes */
+.attendance-overview, .todays-classes {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  height: 100%;
+  min-height: 300px;
+}
+
+/* Progress Bar Fixes */
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background-color: var(--gray-light);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: var(--spacing-md) 0;
+  box-shadow: var(--shadow-inset);
+}
+
+.progress {
+  height: 100%;
+  transition: width 1s var(--transition-bounce);
+}
+
+/* Minimum Attendance Info Fixes */
+.min-attendance-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background-color: rgba(var(--primary-rgb, 67, 97, 238), 0.05);
+}
+
+.required-percentage {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.attendance-status {
+  padding: var(--spacing-xs) 0;
+}
+
+/* Classes List Fixes */
+.class-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.class-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: white;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.class-subject {
+  font-weight: 600;
+}
+
+.class-time {
+  color: var(--gray);
+  font-size: var(--font-size-sm);
+}
+
+/* Empty State Fixes */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-xl);
+  border: 2px dashed var(--gray-light);
+  border-radius: var(--radius-lg);
+  height: 100%;
+  min-height: 200px;
+}
+
+/* Courses Section Fixes */
+.courses-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spacing-lg);
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+/* Course Card Fixes */
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border-top: 5px solid var(--primary);
+  height: 100%;
+}
+
+.attendance-stats {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  flex-grow: 1;
+}
+
+.attendance-numbers {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.attendance-chart {
+  height: 200px;
+  width: 100%;
+}
+
+/* Percentage Status Styles */
+.percentage-good {
+  color: var(--success);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
+.percentage-bad {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
+/* Modal Fixes */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--gray-light);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gray);
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  color: var(--danger);
+}
+
+/* Warning Text */
+.warning-text {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  background-color: rgba(255, 152, 0, 0.1);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--warning);
+  margin-bottom: var(--spacing-lg);
+}
+
+.warning-text i {
+  color: var(--warning);
+  font-size: 1.25rem;
+}
+
+/* Responsive Fixes */
+@media (max-width: 768px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .courses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  
+  .modal-content {
+    width: 95%;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .attendance-overview, .todays-classes {
+    padding: var(--spacing-md);
+  }
+  
+  .modal-header, .modal-body, .modal-footer {
+    padding: var(--spacing-md);
+  }
+  
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
+} 

@@ -1,0 +1,225 @@
+/* Form elements and inputs styling */
+
+/* Form group container */
+.form-group {
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--gray-dark);
+}
+
+/* Inputs, selects, and textareas */
+input, 
+select, 
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-md);
+  background-color: white;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+  color: var(--dark);
+  line-height: 1.5;
+}
+
+/* Focus states */
+input:focus, 
+select:focus, 
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+}
+
+/* Disabled state */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: var(--gray-light);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Field-specific styles */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Select element arrow */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23343a40' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+}
+
+/* Form helper elements */
+.form-text {
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--gray);
+}
+
+.form-note {
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: rgba(var(--info-rgb, 33, 150, 243), 0.1);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  border-left: 3px solid var(--info);
+}
+
+.tip {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+/* Required field indicator */
+.required::after {
+  content: '*';
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+/* Custom checkbox and radio */
+.form-check {
+  display: block;
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: var(--spacing-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  user-select: none;
+}
+
+.form-check input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: white;
+  border: 1px solid var(--gray-light);
+  border-radius: 3px;
+  transition: all var(--transition-fast);
+}
+
+.form-check:hover input ~ .checkmark {
+  border-color: var(--primary);
+}
+
+.form-check input:checked ~ .checkmark {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.form-check input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.form-check .checkmark:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Radio button variant */
+.form-check.radio .checkmark {
+  border-radius: 50%;
+}
+
+.form-check.radio .checkmark:after {
+  left: 6px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  transform: none;
+}
+
+/* Error and validation states */
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+  border-color: var(--danger);
+}
+
+.form-group.has-error .form-text {
+  color: var(--danger);
+}
+
+.error-message {
+  color: var(--danger);
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  border-left: 4px solid var(--danger);
+}
+
+/* Inline form layout */
+.form-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.form-inline .form-group {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  input, 
+  select, 
+  textarea {
+    padding: 0.6rem 0.75rem;
+    font-size: var(--font-size-sm);
+  }
+  
+  .form-group {
+    margin-bottom: var(--spacing-md);
+  }
+} 
