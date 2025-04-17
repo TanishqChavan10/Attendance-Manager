@@ -5,16 +5,20 @@ A comprehensive attendance management system for students and educators, providi
 ## Screenshots
 
 ### Dashboard
-![Dashboard View](screenshots/dashboard.png)
+![image](https://github.com/user-attachments/assets/696aa728-1534-461e-9d5d-0c28a597a340)
 *Student dashboard showing attendance statistics and upcoming classes*
 
 ### Course Management
-![Course Management](screenshots/courses.png)
+![image](https://github.com/user-attachments/assets/f2237bdf-7a55-44a9-ba57-b7a617f45342)
 *Interface for managing course information and attendance records*
 
 ### Attendance Analytics
-![Analytics View](screenshots/analytics.png)
+![image](https://github.com/user-attachments/assets/6ba31e61-8d70-44fc-a853-4521bb1ca22b)
 *Visual representation of attendance patterns and trends*
+
+### Timetable Visuals
+![image](https://github.com/user-attachments/assets/e35fbd0a-9b94-42a5-a71e-be4da2be89ec)
+*Visual representation of Timetable saved by user*
 
 ## Features
 
