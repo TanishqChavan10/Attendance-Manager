@@ -132,3 +132,7 @@ The application is configured for easy deployment:
 ## License
 
 This project is licensed under the MIT License. 
+
+## Contributors
+
+- [@waghmarepranav2006](https://github.com/waghmarepranav2006)
