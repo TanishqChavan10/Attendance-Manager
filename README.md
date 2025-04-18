@@ -90,23 +90,13 @@ cd backend
 npm install
 ```
 
-3. Configure environment variables
-```bash
-# Create a .env file in the backend directory with:
-PORT=5001
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-SESSION_SECRET=your_session_secret
-# Other environment variables as needed
-```
-
-4. Install frontend dependencies
+3. Install frontend dependencies
 ```bash
 cd ../frontend
 npm install
 ```
 
-5. Start the development servers
+4. Start the development servers
 
 Backend:
 ```bash
@@ -120,7 +110,7 @@ cd frontend
 npm run dev
 ```
 
-6. Access the application at `http://localhost:5173`
+5. Access the application at `http://localhost:5173`
 
 ## Deployment
 
