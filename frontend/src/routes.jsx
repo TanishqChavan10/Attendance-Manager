@@ -7,6 +7,7 @@ import TimetableSetup from "./pages/TimetableSetup";
 import AddCourse from "./pages/AddCourse";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthDebugger from "./components/Debug/AuthDebugger";
+import AdjustAttendancePage from "./pages/AdjustAttendancePage";
 
 const AppRoutes = () => {
   return (
@@ -35,6 +36,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AddCourse />
+          </ProtectedRoute>
+        }
+      />
+      {/* New route added by AI */}
+      <Route
+        path="/adjust-attendance"
+        element={
+          <ProtectedRoute>
+            <AdjustAttendancePage />
           </ProtectedRoute>
         }
       />

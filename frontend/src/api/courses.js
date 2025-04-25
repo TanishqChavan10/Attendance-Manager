@@ -64,6 +64,20 @@ export const markAttendance = async (courseId, attended, date) => {
   }
 };
 
+// New function added by AI
+// Adjust attendance for a course
+export const adjustAttendance = async (courseId, data) => {
+  try {
+    const res = await axiosClient.patch(
+      `/courses/${courseId}/adjust-attendance`,
+      data
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error adjusting attendance:", error);
+    throw error;
+  }
+};
 // Calculate attendance recovery
 export const calculateRecovery = (course, targetPercentage = 75) => {
   if (!course) return { possible: false, classesNeeded: 0 };
