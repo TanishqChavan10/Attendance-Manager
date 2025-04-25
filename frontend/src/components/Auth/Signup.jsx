@@ -4,12 +4,14 @@ import { useAuth } from '../../context/AuthContext';
 
 const Signup = () => {
   const { register, error } = useAuth();
+  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [requiredPercentage, setRequiredPercentage] = useState(75);
   const [localError, setLocalError] = useState('');
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,20 +19,32 @@ const Signup = () => {
     
     if (password !== confirmPassword) {
       setLocalError('Passwords do not match');
+      //clear context error
+      register({clear: true});
       return;
     }
     
     if (requiredPercentage < 0 || requiredPercentage > 100) {
       setLocalError('Required percentage must be between 0 and 100');
+       //clear context error
+       register({clear: true});
       return;
     }
 
+    setLoading(true);
     try {
-      await register({ 
+      const res = await register({ 
         username, 
         password,
         requiredAttendancePercentage: Number(requiredPercentage)
       });
+
+      if(res.error){
+        register({error: res.error});
+      }else{
+        register({clear: true});
+      }
+      
       navigate('/login');
     } catch (err) {
       // Error is handled by the auth context
@@ -58,7 +72,7 @@ const Signup = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
@@ -101,7 +115,7 @@ const Signup = () => {
             <p>Note: The required attendance percentage cannot be easily changed after registration.</p>
           </div>
           
-          <button type="submit" className="btn-primary">Sign Up</button>
+          <button type="submit" className="btn-primary" disabled={loading}>{loading? "Loading...": "Sign Up"}</button>
         </form>
         
         <div className="auth-link">

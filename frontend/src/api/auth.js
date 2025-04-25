@@ -4,6 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Store token in localStorage
 const setToken = (token) => {
+    console.log("Setting token")
     if (token) {
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -66,32 +67,21 @@ export const getCurrentUser = async () => {
     }
 };
 
-// Axios interceptor to handle 401 responses
-axios.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response?.status === 401) {
-            setToken(null);
-        }
-        return Promise.reject(error);
-    }
-);
-
 export const updatePushSubscription = async (subscription) => {
   try {
-    const res = await axios.post("/auth/push-subscription", { 
+    const res = await axios.post(`${API_URL}/api/auth/push-subscription`, { 
       subscription 
     });
     return res.data;
   } catch (error) {
     console.error("Error updating push subscription:", error);
-    throw error;
+    throw error.response?.data || { error: 'Failed to update push subscription' };
   }
 };
 
 export const updateRequiredPercentage = async (percentage) => {
   try {
-    const res = await axios.put("/auth/required-percentage", { 
+    const res = await axios.put(`${API_URL}/api/auth/required-percentage`, { 
       percentage 
     });
     return res.data;
