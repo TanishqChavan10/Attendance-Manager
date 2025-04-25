@@ -1,3 +1,4 @@
+//New route added by AI
 const express = require('express');
 const Course = require('../models/Course');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -109,6 +110,31 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete course' });
     }
 });
+
+// Adjust attendedClasses and totalClasses for a course
+router.patch('/:courseId/adjust-attendance', authMiddleware, async (req, res) => {
+    try {
+        const { attendedClasses, totalClasses } = req.body;
+        const course = await Course.findOne({
+            _id: req.params.courseId,
+            user: req.user._id
+        });
+        if (!course) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+
+        course.attendedClasses = attendedClasses;
+        course.totalClasses = totalClasses;
+
+        await course.save();
+        res.json(course);
+    } catch (error) {
+        console.error('Error adjusting attendance:', error);
+        res.status(500).json({ error: 'Failed to adjust attendance' });
+    }
+});
+
+
 
 // Mark attendance for a course
 router.post('/:id/attendance', authMiddleware, async (req, res) => {
