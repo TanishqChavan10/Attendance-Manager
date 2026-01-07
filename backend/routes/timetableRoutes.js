@@ -19,7 +19,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
     try {
         let timetable = await Timetable.findOne({ user: req.user._id });
-        
+
         if (!timetable) {
             // Create new timetable if it doesn't exist
             timetable = new Timetable({
@@ -30,7 +30,7 @@ router.post('/', authMiddleware, async (req, res) => {
             // Update existing timetable
             timetable.classes = req.body.classes || [];
         }
-        
+
         await timetable.save();
         res.status(201).json(timetable);
     } catch (error) {
@@ -42,27 +42,44 @@ router.post('/', authMiddleware, async (req, res) => {
 // Add a class to the timetable
 router.post('/class', authMiddleware, async (req, res) => {
     try {
+        const { day, subject, time } = req.body;
+
+        // Input validation
+        const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        if (!day || !validDays.includes(day)) {
+            return res.status(400).json({ error: 'Day must be a valid day of the week' });
+        }
+
+        if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
+            return res.status(400).json({ error: 'Subject is required and must be a non-empty string' });
+        }
+
+        if (!time || typeof time !== 'string' || time.trim().length === 0) {
+            return res.status(400).json({ error: 'Time is required and must be a non-empty string' });
+        }
+
         let timetable = await Timetable.findOne({ user: req.user._id });
-        
+
         if (!timetable) {
             // Create new timetable if it doesn't exist
             timetable = new Timetable({
                 user: req.user._id,
                 classes: [{
-                    day: req.body.day,
-                    subject: req.body.subject,
-                    time: req.body.time
+                    day,
+                    subject: subject.trim(),
+                    time: time.trim()
                 }]
             });
         } else {
             // Add class to existing timetable
             timetable.classes.push({
-                day: req.body.day,
-                subject: req.body.subject,
-                time: req.body.time
+                day,
+                subject: subject.trim(),
+                time: time.trim()
             });
         }
-        
+
         await timetable.save();
         res.status(201).json(timetable);
     } catch (error) {
@@ -75,25 +92,25 @@ router.post('/class', authMiddleware, async (req, res) => {
 router.put('/class/:classId', authMiddleware, async (req, res) => {
     try {
         const timetable = await Timetable.findOne({ user: req.user._id });
-        
+
         if (!timetable) {
             return res.status(404).json({ error: 'Timetable not found' });
         }
-        
+
         // Find the class to update
         const classIndex = timetable.classes.findIndex(
             c => c._id.toString() === req.params.classId
         );
-        
+
         if (classIndex === -1) {
             return res.status(404).json({ error: 'Class not found in timetable' });
         }
-        
+
         // Update the class
         if (req.body.day) timetable.classes[classIndex].day = req.body.day;
         if (req.body.subject) timetable.classes[classIndex].subject = req.body.subject;
         if (req.body.time) timetable.classes[classIndex].time = req.body.time;
-        
+
         await timetable.save();
         res.json(timetable);
     } catch (error) {
@@ -106,16 +123,16 @@ router.put('/class/:classId', authMiddleware, async (req, res) => {
 router.delete('/class/:classId', authMiddleware, async (req, res) => {
     try {
         const timetable = await Timetable.findOne({ user: req.user._id });
-        
+
         if (!timetable) {
             return res.status(404).json({ error: 'Timetable not found' });
         }
-        
+
         // Remove the class
         timetable.classes = timetable.classes.filter(
             c => c._id.toString() !== req.params.classId
         );
-        
+
         await timetable.save();
         res.json({ message: 'Class removed from timetable successfully' });
     } catch (error) {

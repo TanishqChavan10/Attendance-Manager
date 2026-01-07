@@ -1,10 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { login, register, logout, getCurrentUser } from '../api/auth';
+import { login, register, registerOrganization, logout, getCurrentUser } from '../api/auth';
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [organization, setOrganization] = useState(null);
+    const [userRole, setUserRole] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -32,6 +34,17 @@ export const AuthProvider = ({ children }) => {
         try {
             const data = await login(credentials);
             setUser(data.user);
+
+            // Store organization and role
+            if (data.user.organizationId) {
+                setOrganization({
+                    id: data.user.organizationId,
+                    name: data.user.organizationName,
+                    slug: data.user.organizationSlug
+                });
+            }
+            setUserRole(data.user.role);
+
             return data;
         } catch (error) {
             setError(error.error || 'Login failed');
@@ -46,9 +59,47 @@ export const AuthProvider = ({ children }) => {
         setError(null);
         try {
             const data = await register(userData);
+            // Auto-login after registration
+            if (data.token && data.user) {
+                setUser(data.user);
+                if (data.user.organizationId) {
+                    setOrganization({
+                        id: data.user.organizationId,
+                        name: data.user.organizationName,
+                        slug: data.user.organizationSlug
+                    });
+                }
+                setUserRole(data.user.role);
+            }
             return data;
         } catch (error) {
             setError(error.error || 'Registration failed');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegisterOrganization = async (orgData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await registerOrganization(orgData);
+            // Auto-login after organization creation
+            if (data.token && data.user) {
+                setUser(data.user);
+                if (data.user.organizationId) {
+                    setOrganization({
+                        id: data.user.organizationId,
+                        name: data.user.organizationName,
+                        slug: data.user.organizationSlug
+                    });
+                }
+                setUserRole(data.user.role);
+            }
+            return data;
+        } catch (error) {
+            setError(error.error || 'Organization creation failed');
             throw error;
         } finally {
             setLoading(false);
@@ -60,6 +111,8 @@ export const AuthProvider = ({ children }) => {
         try {
             await logout();
             setUser(null);
+            setOrganization(null);
+            setUserRole(null);
         } catch (error) {
             console.error('Logout error:', error);
             setError(error.message);
@@ -70,10 +123,13 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        organization,
+        userRole,
         loading,
         error,
         login: handleLogin,
         register: handleRegister,
+        registerOrganization: handleRegisterOrganization,
         logout: handleLogout,
         isAuthenticated: !!user
     };

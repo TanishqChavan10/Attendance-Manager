@@ -4,9 +4,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import TimetableSetup from "./pages/TimetableSetup";
-import AddCourse from "./pages/AddCourse";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AuthDebugger from "./components/Debug/AuthDebugger";
+
 
 const AppRoutes = () => {
   return (
@@ -38,8 +37,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      {/* Debug route for authentication testing */}
-      <Route path="/debug/auth" element={<AuthDebugger />} />
       {/* Catch-all route - redirect to home page */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

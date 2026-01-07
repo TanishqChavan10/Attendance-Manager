@@ -1,5 +1,4 @@
 import { AuthProvider } from "./context/AuthContext";
-import { CourseProvider } from "./context/CourseContext";
 import { TimetableProvider } from "./context/TimetableContext";
 import AppRoutes from "./routes";
 import Navbar from "./components/Navbar";
@@ -11,30 +10,25 @@ import "./components/styles/auth.css";
 import "./components/styles/forms.css";
 import "./components/styles/utilities.css";
 import "./components/styles/attendance.css";
+import { Toaster } from "sonner";
 
 function App() {
   return (
     <AuthProvider>
-      <CourseProvider>
-        <TimetableProvider>
-          <div className="app">
-            <div className="bg-decoration bg-decoration-1"></div>
-            <div className="bg-decoration bg-decoration-2"></div>
-            <Navbar />
-            <main className="app-content">
-              <div className="container">
-                <AppRoutes />
-              </div>
-            </main>
-            <AttendancePrompt />
-            <footer>
-              <div className="container">
-                <p>&copy; {new Date().getFullYear()} Attendance Manager App</p>
-              </div>
-            </footer>
-          </div>
-        </TimetableProvider>
-      </CourseProvider>
+      <TimetableProvider>
+        <div className="app">
+          <div className="bg-decoration bg-decoration-1"></div>
+          <div className="bg-decoration bg-decoration-2"></div>
+          <Navbar />
+          <main className="app-content">
+            <div className="container">
+              <AppRoutes />
+            </div>
+          </main>
+          <AttendancePrompt />
+          <Toaster position="top-center" richColors theme="dark" />
+        </div>
+      </TimetableProvider>
     </AuthProvider>
   );
 }

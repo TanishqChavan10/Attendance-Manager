@@ -1,684 +1,246 @@
-import { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useContext } from "react";
 import { TimetableContext } from "../context/TimetableContext";
 import { useAuth } from "../context/AuthContext";
-import useAttendanceReminders from "../hooks/useAttendanceReminders";
-
-const COLORS = ["#4CAF50", "#F44336"]; // Green for attended, Red for missed
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, BookOpen, TrendingUp, Bell, Clock, CheckCircle2, XCircle, AlertCircle, Target } from "lucide-react";
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { getTodaysClasses, getAttendanceStats, markClassAttendance, timetable } = useContext(TimetableContext);
-  const [showPercentageModal, setShowPercentageModal] = useState(false);
-  const [newPercentage, setNewPercentage] = useState((user?.requiredAttendancePercentage || 75));
-  const [updatingPercentage, setUpdatingPercentage] = useState(false);
-  const [todaysClasses, setTodaysClasses] = useState([]);
-  const [attendanceStats, setAttendanceStats] = useState({ total: 0, attended: 0, percentage: 0 });
-  const [subjectAttendanceData, setSubjectAttendanceData] = useState([]);
-  const navigate = useNavigate();
-  
-  // Initialize the attendance reminders
-  useAttendanceReminders();
+    const { user } = useAuth();
+    const { getTodaysClasses, getAttendanceStats } = useContext(TimetableContext);
 
-  // Load data when component mounts
-  useEffect(() => {
-    // First try to load attendance stats directly
-    const stats = getAttendanceStats();
-    if (stats && (stats.total > 0 || stats.attended > 0)) {
-      console.log("Initial attendance stats:", stats);
-      setAttendanceStats(stats);
-    }
-    
-    // Also load subject-wise attendance data
-    const subjectData = getSubjectAttendanceData();
-    setSubjectAttendanceData(subjectData);
-    
-    // Try to load cached classes from localStorage first
-    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const cachedClasses = localStorage.getItem(`todaysClasses_${todayStr}`);
-    
-    if (cachedClasses) {
-      try {
-        const parsedClasses = JSON.parse(cachedClasses);
-        if (parsedClasses.length > 0) {
-          setTodaysClasses(parsedClasses);
-        }
-      } catch (err) {
-        console.error("Error parsing cached today's classes:", err);
-      }
-    }
-    
-    // Then update data from the context
-    updateAttendanceData();
-    
-    // Set up a refresh interval to periodically check for updates
-    const refreshTimer = setInterval(() => {
-      const freshStats = getAttendanceStats();
-      setAttendanceStats(freshStats);
-      updateAttendanceData();
-    }, 30000); // Every 30 seconds
-    
-    return () => {
-      clearInterval(refreshTimer);
+    const todaysClasses = getTodaysClasses() || [];
+    const attendanceStats = getAttendanceStats() || { total: 0, attended: 0, percentage: 0 };
+    const requiredPercentage = user?.requiredAttendancePercentage || 75;
+
+    // Helper to get day name
+    const getTodayDate = () => {
+        return new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
-  }, []);
 
-  // Load data when component mounts and when timetable changes
-  useEffect(() => {
-    console.log("Dashboard useEffect triggered - loading fresh data");
-    
-    // Immediately update all data
-    updateAttendanceData();
-    
-    // Set up a refresh interval to periodically check for updates
-    const refreshTimer = setInterval(() => {
-      console.log("Periodic refresh triggered");
-      updateAttendanceData();
-    }, 10000); // Every 10 seconds
-    
-    return () => {
-      clearInterval(refreshTimer);
-    };
-  }, [timetable]); // Re-run effect when timetable changes
-  
-  // Update attendance data
-  const updateAttendanceData = () => {
-    // Always refresh from localStorage first to ensure we have the latest data
-    try {
-      const cachedTimetable = localStorage.getItem('timetableData');
-      if (cachedTimetable) {
-        const parsedTimetable = JSON.parse(cachedTimetable);
-        if (parsedTimetable && parsedTimetable.classes && parsedTimetable.classes.length > 0) {
-          // Force sync the context to use the latest localStorage data
-          console.log("Refreshing from cached timetable in localStorage");
-        }
-      }
-    } catch (err) {
-      console.error("Error parsing timetable from localStorage:", err);
-    }
-    
-    // Get today's classes - this will now use the refreshed timetable
-    const classes = getTodaysClasses();
-    
-    // Always update today's classes
-    if (classes && classes.length > 0) {
-      setTodaysClasses(classes);
-      
-      // Save today's classes to localStorage for persistence
-      const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      localStorage.setItem(`todaysClasses_${todayStr}`, JSON.stringify(classes));
-    } else {
-      // Try to get classes from localStorage if nothing is returned
-      const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const cachedClasses = localStorage.getItem(`todaysClasses_${todayStr}`);
-      
-      if (cachedClasses) {
-        try {
-          const parsedClasses = JSON.parse(cachedClasses);
-          if (parsedClasses.length > 0) {
-            setTodaysClasses(parsedClasses);
-          }
-        } catch (err) {
-          console.error("Error parsing cached today's classes:", err);
-        }
-      }
-    }
-    
-    // Always get fresh attendance statistics
-    const stats = getAttendanceStats();
-    console.log("Fresh attendance stats:", stats);
-    
-    // Always update the attendance stats
-    setAttendanceStats(stats);
-    
-    // Always get fresh subject attendance data
-    const subjectData = getSubjectAttendanceData();
-    setSubjectAttendanceData(subjectData);
-    
-    // Debug output
-    console.log("Updated attendance stats:", stats);
-    console.log("Subject attendance data:", subjectData);
-    if (classes && classes.length > 0) {
-      console.log("Today's classes with attendance:", classes.map(cls => ({
-        subject: cls.subject,
-        time: cls.time,
-        attended: cls.attended,
-      })));
-    }
-  };
-  
-  // Get the user's required percentage
-  const requiredPercentage = user?.requiredAttendancePercentage || 75;
-  
-  // Handler for marking attendance
-  const handleAttendanceToggle = async (classId, currentStatus) => {
-    console.log(`Toggling attendance for class ${classId} from ${currentStatus} to ${!currentStatus}`);
-    
-    const success = await markClassAttendance(classId, !currentStatus);
-    
-    if (success) {
-      // Immediately get fresh attendance stats
-      const updatedStats = getAttendanceStats();
-      console.log("Updated attendance stats after toggle:", updatedStats);
-      
-      // Update state with new stats
-      setAttendanceStats(updatedStats);
-      
-      // Update subject attendance data
-      const updatedSubjectData = getSubjectAttendanceData();
-      setSubjectAttendanceData(updatedSubjectData);
-      
-      // Refresh today's classes to show updated UI
-      const updatedClasses = getTodaysClasses();
-      setTodaysClasses(updatedClasses);
-      
-      // Save updated classes to localStorage
-      const todayStr = new Date().toISOString().split('T')[0];
-      localStorage.setItem(`todaysClasses_${todayStr}`, JSON.stringify(updatedClasses));
-      
-      // Ensure total counts are synced
-      if (updatedStats.total !== attendanceStats.total || 
-          updatedStats.attended !== attendanceStats.attended ||
-          updatedStats.percentage !== attendanceStats.percentage) {
-        console.log("Forcing attendance stats update due to discrepancy");
-        setAttendanceStats(updatedStats);
-      }
-    }
-  };
-  
-  // Handler for updating required percentage
-  const handlePercentageUpdate = async () => {
-    if (newPercentage < 0 || newPercentage > 100) return;
-    
-    setUpdatingPercentage(true);
-    try {
-      // Use user context to update the required percentage
-      // This assumes the useAuth hook has an updateRequiredPercentage function
-      if (user && user.requiredAttendancePercentage !== newPercentage) {
-        // For now just update the UI, but in the future implement API call
-        // await updateRequiredPercentage(Number(newPercentage));
-        console.log(`Updated required percentage from ${user.requiredAttendancePercentage} to ${newPercentage}`);
-      }
-      setShowPercentageModal(false);
-    } catch (error) {
-      console.error("Error updating required percentage:", error);
-    } finally {
-      setUpdatingPercentage(false);
-    }
-  };
+    return (
+        <div className="min-h-screen relative overflow-hidden bg-background pt-20 pb-12 px-4 sm:px-6">
 
-  // Function to get attendance data for individual subjects
-  const getSubjectAttendanceData = () => {
-    // First try to get the latest data from localStorage
-    let currentTimetableData;
-    try {
-      const storedData = localStorage.getItem('timetableData');
-      if (storedData) {
-        currentTimetableData = JSON.parse(storedData);
-      } else {
-        currentTimetableData = timetable;
-      }
-    } catch (err) {
-      console.error("Error parsing timetable data from localStorage:", err);
-      currentTimetableData = timetable;
-    }
-    
-    // Check if timetable classes exist
-    if (!currentTimetableData || !currentTimetableData.classes || 
-        !Array.isArray(currentTimetableData.classes) || 
-        currentTimetableData.classes.length === 0) {
-      return [];
-    }
+           
+            <div className="max-w-7xl mx-auto space-y-8 relative z-10">
 
-    // Create a map to organize classes by subject
-    const subjectMap = {};
-    
-    // Process each class in the timetable
-    currentTimetableData.classes.forEach(cls => {
-      // Initialize subject entry if it doesn't exist
-      if (!subjectMap[cls.subject]) {
-        subjectMap[cls.subject] = {
-          total: 0,
-          attended: 0
-        };
-      }
-      
-      // Increment total count for this subject
-      subjectMap[cls.subject].total += 1;
-      
-      // Increment attended count if class was attended
-      if (cls.attended) {
-        subjectMap[cls.subject].attended += 1;
-      }
-    });
-    
-    // Generate a color palette based on the number of subjects
-    const subjectColors = [
-      '#4CAF50', // Green
-      '#2196F3', // Blue
-      '#FF9800', // Orange
-      '#E91E63', // Pink
-      '#9C27B0', // Purple
-      '#00BCD4', // Cyan
-      '#FFEB3B', // Yellow
-      '#795548', // Brown
-      '#607D8B'  // Blue Grey
-    ];
-    
-    // Convert map to array for the chart
-    const chartData = Object.keys(subjectMap).map((subject, index) => {
-      const data = subjectMap[subject];
-      return {
-        name: subject,
-        value: data.attended,
-        total: data.total,
-        color: subjectColors[index % subjectColors.length],
-        percentage: data.total > 0 ? (data.attended / data.total) * 100 : 0
-      };
-    });
-    
-    // Sort by attendance percentage (highest first)
-    chartData.sort((a, b) => b.percentage - a.percentage);
-    
-    console.log("Generated subject attendance data:", chartData);
-    return chartData;
-  };
-
-  return (
-    <div className="dashboard-container fade-in">
-      <header className="dashboard-header bounce-in" style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h1>Welcome, <span className="highlight-container" style={{ fontWeight: '700', textShadow: '0 0 1px rgba(0,0,0,0.3)' }}>{user?.username || 'Student'}</span>!</h1>
-        <p>Track and manage your attendance efficiently</p>
-      </header>
-      
-      <div className="dashboard-stats">
-        <div className="attendance-overview scale-in">
-          <h2>Attendance Overview</h2>
-          <div className="overall-attendance">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-              <h3 style={{ margin: 0 }}>Overall Attendance:</h3>
-              <span 
-                className={`${attendanceStats.percentage >= requiredPercentage ? 'percentage-good shimmer' : 'percentage-bad pulse'}`}
-                style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold' }}
-              >
-                {attendanceStats.percentage.toFixed(2)}%
-              </span>
-            </div>
-            
-            <div className="progress-bar">
-              <div 
-                className="progress" 
-                style={{ 
-                  width: `${Math.min(100, attendanceStats.percentage)}%`,
-                  backgroundColor: attendanceStats.percentage >= requiredPercentage ? 'var(--success)' : 'var(--danger)'
-                }}
-              ></div>
-            </div>
-            
-            <div className="min-attendance-info">
-              <div className="required-percentage">
-                <span>Minimum Required: <strong>{requiredPercentage}%</strong></span>
-                <button 
-                  className="btn-icon" 
-                  onClick={() => setShowPercentageModal(true)}
-                  title="Change required percentage"
-                >
-                  <i className="fas fa-edit"></i>
-                </button>
-              </div>
-              <div className="attendance-status">
-                <span 
-                  className={attendanceStats.percentage >= requiredPercentage ? 'status-good' : 'status-bad'}
-                >
-                  {attendanceStats.percentage >= requiredPercentage 
-                    ? "✓ Meeting required attendance" 
-                    : `✗ ${(requiredPercentage - attendanceStats.percentage).toFixed(2)}% below requirement`}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="todays-classes slide-in-right">
-          <h2>Today's Classes</h2>
-          {todaysClasses && todaysClasses.length > 0 ? (
-            <>
-              <ul className="class-list">
-                {todaysClasses.map((classItem, index) => (
-                  <li key={classItem._id || index} className="class-item staggered-item" style={{ animationDelay: `${0.1 * (index + 1)}s` }}>
-                    <div className="class-subject">{classItem.subject}</div>
-                    <div className="class-time">{classItem.time}</div>
-                    <button 
-                      className={`attendance-toggle ${classItem.attended ? 'attended' : 'not-attended'}`}
-                      onClick={() => handleAttendanceToggle(classItem._id, classItem.attended)}
-                    >
-                      {classItem.attended ? 
-                        <span>Attended <i className="fas fa-check"></i></span> : 
-                        <span>Mark as Attended</span>
-                      }
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <div className="empty-state glass-effect" style={{ textAlign: 'center', padding: 'var(--spacing-xl) 0' }}>
-              <p>No classes scheduled for today.</p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: 'var(--spacing-md)' }}>
-                <button 
-                  className="btn btn-3d" 
-                  onClick={() => navigate('/timetable')}
-                >
-                  Setup Timetable
-                </button>
-                {attendanceStats.total > 0 && (
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => navigate('/timetable', { state: { showPastClasses: true } })}
-                  >
-                    View Past Attendance
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="timetable-attendance-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
-          <h2 style={{ margin: 0 }}>Subject-wise Attendance</h2>
-        </div>
-        
-        {/* Display subject attendance data */}
-        {subjectAttendanceData.length === 0 ? (
-          <div className="empty-state">No attendance data available for subjects.</div>
-        ) : (
-          <div className="subject-charts-container">
-            {subjectAttendanceData.map((subject, index) => (
-              <div key={index} className="subject-chart-card">
-                <h3>{subject.name}</h3>
-                <div className="subject-chart">
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Attended", value: subject.value },
-                          { name: "Missed", value: subject.total - subject.value }
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        <Cell fill={subject.color} />
-                        <Cell fill="#F44336" />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                                Welcome back,
+                            </span>{" "}
+                            <span className="text-indigo-400">
+                                {user?.username || 'Student'}
+                            </span>
+                        </h1>
+                        <p className="text-slate-400 mt-2 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            {getTodayDate()}
+                        </p>
+                    </div>
+                    {/* Optional Action Buttons could go here */}
                 </div>
-                <div className="subject-stats">
-                  <div className="stat-row">
-                    <span className="stat-label">Attendance:</span>
-                    <span className={`stat-value ${subject.percentage >= requiredPercentage ? 'good' : 'bad'}`}>
-                      {subject.percentage.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Attended:</span>
-                    <span className="stat-value">{subject.value} / {subject.total}</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Status:</span>
-                    <span className={`stat-status ${subject.percentage >= requiredPercentage ? 'status-good' : 'status-bad'}`}>
-                      {subject.percentage >= requiredPercentage 
-                        ? "✓ Meeting requirement" 
-                        : `✗ ${(requiredPercentage - subject.percentage).toFixed(2)}% below`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {/* Modal for updating required percentage */}
-      {showPercentageModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Update Required Attendance</h3>
-              <button className="btn-close" onClick={() => setShowPercentageModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <p className="warning-text">
-                <i className="fas fa-exclamation-triangle"></i> 
-                Changing this value requires admin approval at most institutions. 
-                Make sure you enter the correct required percentage for your college/university.
-              </p>
-              <div className="form-group">
-                <label htmlFor="newPercentage">Required Attendance Percentage:</label>
-                <div className="input-with-hint">
-                  <input 
-                    id="newPercentage"
-                    type="number" 
-                    min="0" 
-                    max="100" 
-                    value={newPercentage}
-                    onChange={(e) => setNewPercentage(Number(e.target.value))}
-                  />
-                  <span className="input-hint">Current: {requiredPercentage}%</span>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                className="btn-secondary" 
-                onClick={() => setShowPercentageModal(false)}
-                disabled={updatingPercentage}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn-primary" 
-                onClick={handlePercentageUpdate}
-                disabled={updatingPercentage || newPercentage === requiredPercentage}
-              >
-                {updatingPercentage ? "Updating..." : "Save Percentage"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      <style>{`
-        .attendance-toggle {
-          padding: 6px 12px;
-          border-radius: 4px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border: none;
-          outline: none;
-        }
-        
-        .attendance-toggle.attended {
-          background-color: var(--success);
-          color: white;
-        }
-        
-        .attendance-toggle.not-attended {
-          background-color: #f1f1f1;
-          color: #666;
-          border: 1px solid #ddd;
-        }
-        
-        .attendance-toggle:hover {
-          filter: brightness(1.1);
-          transform: translateY(-1px);
-        }
-        
-        .class-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 16px;
-          background-color: white;
-          border-radius: 8px;
-          margin-bottom: 10px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-        
-        .class-subject {
-          font-weight: 600;
-          font-size: 16px;
-          color: #333;
-        }
-        
-        .class-time {
-          color: #777;
-          font-size: 14px;
-        }
-        
-        .input-with-hint {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        
-        .input-hint {
-          margin-left: 10px;
-          font-size: 14px;
-          color: #666;
-          font-style: italic;
-        }
-        
-        /* Subject-wise attendance styling */
-        .subject-attendance-summary {
-          margin-top: 20px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          padding: 15px;
-        }
-        
-        .subject-attendance-summary h4 {
-          margin-top: 0;
-          margin-bottom: 15px;
-          font-size: 16px;
-          color: #333;
-        }
-        
-        .subject-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 10px;
-        }
-        
-        .subject-item {
-          background: white;
-          border-radius: 6px;
-          padding: 12px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        /* Subject charts styling */
-        .subject-charts-container {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 20px;
-          padding: 10px 0;
-        }
-        
-        .subject-chart-card {
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-          padding: 16px;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .subject-chart-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-        }
-        
-        .subject-chart-card h3 {
-          margin-top: 0;
-          margin-bottom: 12px;
-          font-size: 18px;
-          color: #333;
-          text-align: center;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 8px;
-        }
-        
-        .subject-chart {
-          margin: 0 auto;
-          width: 100%;
-          height: 180px;
-        }
-        
-        .subject-stats {
-          margin-top: 15px;
-          border-top: 1px solid #eee;
-          padding-top: 10px;
-        }
-        
-        .stat-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 6px;
-        }
-        
-        .stat-label {
-          font-weight: 500;
-          color: #555;
-        }
-        
-        .stat-value {
-          font-weight: 600;
-        }
-        
-        .stat-value.good {
-          color: var(--success);
-        }
-        
-        .stat-value.bad {
-          color: var(--danger);
-        }
-        
-        .stat-status {
-          font-size: 12px;
-          font-weight: 500;
-        }
-        
-        .status-good {
-          color: var(--success);
-        }
-        
-        .status-bad {
-          color: var(--danger);
-        }
-        
-        .empty-state {
-          background-color: #f8f9fa;
-          border-radius: 10px;
-          padding: 30px;
-          text-align: center;
-          color: #666;
-          margin: 20px 0;
-        }
-      `}</style>
-    </div>
-  );
+                {/* Stats Grid */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+
+                    {/* Overall Attendance */}
+                    <Card className="glass-panel border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden group hover:border-indigo-500/40 transition-all">
+                        <div className="absolute -right-6 -top-6 h-24 w-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all" />
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-200">Overall Attendance</CardTitle>
+                            <div className="h-8 w-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                <TrendingUp className="h-4 w-4" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white flex items-baseline gap-1">
+                                {attendanceStats.percentage.toFixed(1)}
+                                <span className="text-sm font-normal text-slate-400">%</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                                {attendanceStats.percentage >= requiredPercentage ? (
+                                    <span className="flex items-center text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                        On Track
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center text-xs font-medium text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                        {(requiredPercentage - attendanceStats.percentage).toFixed(1)}% Below Target
+                                    </span>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Classes Attended */}
+                    <Card className="glass-panel border-purple-500/20 bg-purple-500/5 relative overflow-hidden group hover:border-purple-500/40 transition-all">
+                        <div className="absolute -right-6 -top-6 h-24 w-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all" />
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-200">Classes Attended</CardTitle>
+                            <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                <BookOpen className="h-4 w-4" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">
+                                {attendanceStats.attended}
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Out of {attendanceStats.total} total classes
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Today's Classes */}
+                    <Card className="glass-panel border-blue-500/20 bg-blue-500/5 relative overflow-hidden group hover:border-blue-500/40 transition-all">
+                        <div className="absolute -right-6 -top-6 h-24 w-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all" />
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-200">Today's Classes</CardTitle>
+                            <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <Calendar className="h-4 w-4" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">
+                                {todaysClasses.length}
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Scheduled for today
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Target Goal */}
+                    <Card className="glass-panel border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                        <div className="absolute -right-6 -top-6 h-24 w-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all" />
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-200">Target Goal</CardTitle>
+                            <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                <Target className="h-4 w-4" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">
+                                {requiredPercentage}%
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Minimum required attendance
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Main Content Area */}
+                <div className="grid gap-6 md:grid-cols-3 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+
+                    {/* Today's Schedule - Takes up 2/3 width on larger screens if we add a sidebar, for now full width or 2/3 */}
+                    <div className="md:col-span-2">
+                        <Card className="glass-panel border-white/10 h-full">
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-xl font-bold text-white">Today's Schedule</CardTitle>
+                                        <CardDescription className="text-slate-400">
+                                            Mark your attendance for today's sessions
+                                        </CardDescription>
+                                    </div>
+                                    <div className="bg-white/5 p-2 rounded-lg">
+                                        <Clock className="h-5 w-5 text-indigo-400" />
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {todaysClasses.length > 0 ? (
+                                    todaysClasses.map((cls, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 hover:border-indigo-500/30 transition-all duration-300"
+                                        >
+                                            <div className="space-y-1 mb-4 sm:mb-0">
+                                                <h4 className="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                                                    {cls.subject}
+                                                </h4>
+                                                <div className="flex items-center gap-3 text-sm text-slate-400">
+                                                    <span className="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded text-xs border border-white/5">
+                                                        <Clock className="h-3 w-3" />
+                                                        {cls.time}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>Room {cls.room || 'TBA'}</span>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                size="sm"
+                                                variant={cls.attended ? "outline" : "default"}
+                                                className={`min-w-[100px] transition-all duration-300 ${cls.attended
+                                                    ? "border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+                                                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                                                    }`}
+                                            >
+                                                {cls.attended ? (
+                                                    <>
+                                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                        Present
+                                                    </>
+                                                ) : (
+                                                    "Mark Present"
+                                                )}
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                                        <div className="h-20 w-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                                            <Calendar className="h-10 w-10 text-slate-600" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-2">No Classes Today</h3>
+                                        <p className="text-slate-400 max-w-sm">
+                                            Enjoy your free day! Check your timetable to prepare for upcoming classes.
+                                        </p>
+                                        <Button variant="outline" className="mt-6 border-white/10 hover:bg-white/5">
+                                            View Full Timetable
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Quick Actions / Notifications - Right Sidebar */}
+                    <div className="md:col-span-1 space-y-6">
+
+                        {/* Quick Tips or Notifications */}
+                        <Card className="glass-panel border-amber-500/20 bg-amber-500/5">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium text-amber-200 flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    Attendance Alert
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-xs text-slate-300">
+                                    You need to attend next <span className="font-bold text-white">3 classes</span> of <span className="text-amber-300">DBMS</span> to reach your 75% target.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
+
+
 
 export default Dashboard;
