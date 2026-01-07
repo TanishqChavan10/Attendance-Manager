@@ -64,7 +64,6 @@ const Navbar = () => {
                         <>
                             <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
                             <NavLink to="/timetable" icon={Calendar}>Timetable</NavLink>
-                            <NavLink to="/courses/add" icon={PlusCircle}>Add Course</NavLink>
                             <div className="w-px h-6 bg-border mx-2" />
                             <Button
                                 variant="ghost"
@@ -109,7 +108,6 @@ const Navbar = () => {
                             <>
                                 <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
                                 <NavLink to="/timetable" icon={Calendar}>Timetable</NavLink>
-                                <NavLink to="/courses/add" icon={PlusCircle}>Add Course</NavLink>
                                 <Button
                                     variant="destructive"
                                     className="w-full justify-start mt-4 gap-2"

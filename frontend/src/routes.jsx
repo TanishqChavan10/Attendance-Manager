@@ -29,14 +29,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/courses/add"
-        element={
-          <ProtectedRoute>
-            <AddCourse />
-          </ProtectedRoute>
-        }
-      />
       {/* Catch-all route - redirect to home page */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

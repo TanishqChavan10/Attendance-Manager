@@ -1,10 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { TimetableContext } from '../context/TimetableContext';
-import { CourseContext } from '../context/CourseContext';
-import { 
-  getLastPromptDate, 
-  setLastPromptDate, 
-  shouldShowPromptToday, 
+import {
+  getLastPromptDate,
+  setLastPromptDate,
+  shouldShowPromptToday,
   markClassAttendanceTracked,
   hasTrackedClassToday,
   forceShowAttendancePrompt
@@ -17,25 +16,24 @@ const AttendancePrompt = () => {
   const [untrackedClassesOnly, setUntrackedClassesOnly] = useState(true);
 
   const { getTodaysClasses, markClassAttendance } = useContext(TimetableContext);
-  const { recordAttendance } = useContext(CourseContext);
 
   // Function to determine if a class time has passed
   const hasClassTimePassed = (timeStr) => {
     if (!timeStr) return false;
-    
+
     try {
       // Parse time like "09:00 AM"
       const [time, modifier] = timeStr.split(' ');
       let [hours, minutes] = time.split(':').map(Number);
-      
+
       if (modifier === 'PM' && hours < 12) hours += 12;
       if (modifier === 'AM' && hours === 12) hours = 0;
-      
+
       const classTime = new Date();
       classTime.setHours(hours, minutes, 0, 0);
-      
+
       const now = new Date();
-      
+
       return now >= classTime;
     } catch (error) {
       console.error("Error parsing time:", error);
@@ -47,36 +45,36 @@ const AttendancePrompt = () => {
   const checkPromptConditions = () => {
     // Get today's classes
     const classes = getTodaysClasses();
-    
+
     if (!classes || classes.length === 0) {
       return false;
     }
-    
+
     // Filter for classes that:
     // 1. Have already started/passed (if time-based checking is enabled)
     // 2. Haven't been tracked today (if untrackedClassesOnly is true)
     const relevantClasses = classes.filter(cls => {
       const timeHasPassed = hasClassTimePassed(cls.time);
       const notTrackedYet = !hasTrackedClassToday(cls._id);
-      
+
       return timeHasPassed && (untrackedClassesOnly ? notTrackedYet : true);
     });
-    
+
     // If there are relevant classes and we either haven't shown the prompt today
     // or we're forcing a check, then show the prompt
     if (relevantClasses.length > 0 && (shouldShowPromptToday() || !untrackedClassesOnly)) {
       setTodaysClasses(relevantClasses);
-      
+
       // Initialize attendance responses
       const initialResponses = {};
       relevantClasses.forEach(cls => {
         initialResponses[cls._id] = null; // null = not answered yet
       });
       setAttendanceResponses(initialResponses);
-      
+
       return true;
     }
-    
+
     return false;
   };
 
@@ -87,7 +85,7 @@ const AttendancePrompt = () => {
       const shouldShow = checkPromptConditions();
       setShowPrompt(shouldShow);
     }, 1500);
-    
+
     // Then check every 30 minutes for new classes that have started
     const intervalTimer = setInterval(() => {
       const shouldShow = checkPromptConditions();
@@ -95,7 +93,7 @@ const AttendancePrompt = () => {
         setShowPrompt(true);
       }
     }, 30 * 60 * 1000); // 30 minutes
-    
+
     return () => {
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
@@ -119,26 +117,26 @@ const AttendancePrompt = () => {
         try {
           // Use markClassAttendance which will update both the local state and API
           const success = await markClassAttendance(classId, attended);
-          
+
           if (success) {
             // Mark this class as tracked for today
             markClassAttendanceTracked(classId);
           }
-          
+
           return success;
         } catch (error) {
           console.error("Error marking attendance:", error);
           return false;
         }
       });
-    
+
     await Promise.all(promises);
-    
+
     // Save that we showed the prompt today (if using daily prompt)
     if (untrackedClassesOnly) {
       setLastPromptDate();
     }
-    
+
     // Close the prompt
     setShowPrompt(false);
   };
@@ -171,7 +169,7 @@ const AttendancePrompt = () => {
           <h2>Mark Today's Attendance</h2>
           <p>Did you attend these classes today?</p>
         </div>
-        
+
         <div className="attendance-prompt-body">
           {todaysClasses.length === 0 ? (
             <p className="no-classes-message">You have no classes scheduled for today.</p>
@@ -200,10 +198,10 @@ const AttendancePrompt = () => {
             ))
           )}
         </div>
-        
+
         <div className="attendance-prompt-actions">
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={handleSubmit}
             disabled={Object.values(attendanceResponses).some(v => v === null) || todaysClasses.length === 0}
           >

@@ -2,7 +2,6 @@ const webPush = require('web-push');
 const dotenv = require('dotenv');
 const path = require('path');
 const User = require('../models/User');
-const Course = require('../models/Course');
 
 // Load environment variables with the correct path
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -35,7 +34,7 @@ console.log(`Setting VAPID details with subject: ${vapidSubject}`);
 
 webPush.setVapidDetails(
     vapidSubject,
-    vapidKeys.publicKey, 
+    vapidKeys.publicKey,
     vapidKeys.privateKey
 );
 
@@ -55,28 +54,15 @@ const sendAttendanceReminders = async () => {
     try {
         const users = await User.find({ pushSubscription: { $exists: true, $ne: null } });
         console.log(`Sending attendance reminders to ${users.length} users`);
-        
+
         let successCount = 0;
-        
+        const message = 'Reminder: Update your attendance records for today!';
+
         for (const user of users) {
-            const courses = await Course.find({ user: user._id });
-            
-            if (courses.length > 0) {
-                const lowAttendanceCourses = courses.filter(course => 
-                    course.attendancePercentage < 75 && course.totalClasses > 0
-                );
-                
-                let message = 'Reminder: Update your attendance records for today!';
-                
-                if (lowAttendanceCourses.length > 0) {
-                    message += ` Warning: Your attendance is below 75% in ${lowAttendanceCourses.length} course(s).`;
-                }
-                
-                const success = await sendPushNotification(user.pushSubscription, message);
-                if (success) successCount++;
-            }
+            const success = await sendPushNotification(user.pushSubscription, message);
+            if (success) successCount++;
         }
-        
+
         console.log(`Successfully sent reminders to ${successCount}/${users.length} users`);
         return successCount;
     } catch (error) {
@@ -85,8 +71,8 @@ const sendAttendanceReminders = async () => {
     }
 };
 
-module.exports = { 
-    sendPushNotification, 
-    sendAttendanceReminders, 
-    vapidKeys 
+module.exports = {
+    sendPushNotification,
+    sendAttendanceReminders,
+    vapidKeys
 };

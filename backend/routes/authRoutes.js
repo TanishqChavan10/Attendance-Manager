@@ -136,13 +136,12 @@ router.post('/register/organization', async (req, res) => {
 });
 
 /**
- * Register a new user to existing organization
+ * Register a new user (auto-assigns to default organization)
  * POST /api/auth/register
  */
 router.post('/register', async (req, res) => {
     try {
         const {
-            organizationCode,
             username,
             email,
             password,
@@ -153,9 +152,9 @@ router.post('/register', async (req, res) => {
         } = req.body;
 
         // Validation
-        if (!organizationCode || !username || !email || !password) {
+        if (!username || !email || !password) {
             return res.status(400).json({
-                error: 'Organization code, username, email, and password are required'
+                error: 'Username, email, and password are required'
             });
         }
 
@@ -177,16 +176,16 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
-        // Find organization by slug (organizationCode is the slug)
-        const organization = await Organization.findOne({
-            slug: organizationCode.toLowerCase().trim(),
-            isActive: true
-        });
+        // Get or create default organization
+        let organization = await Organization.findOne({ slug: 'default' });
 
         if (!organization) {
-            return res.status(404).json({
-                error: 'Invalid organization code'
+            organization = new Organization({
+                name: 'Default Organization',
+                slug: 'default',
+                type: 'college'
             });
+            await organization.save();
         }
 
         // Determine user role (default to student)
@@ -230,7 +229,7 @@ router.post('/register', async (req, res) => {
         console.error('Registration error:', error);
 
         if (error.name === 'UserExistsError' || error.message.includes('duplicate') || error.code === 11000) {
-            return res.status(409).json({ error: 'Username or email already exists in this organization' });
+            return res.status(409).json({ error: 'Username or email already exists' });
         }
 
         res.status(500).json({ error: error.message || 'Registration failed' });
@@ -238,38 +237,23 @@ router.post('/register', async (req, res) => {
 });
 
 /**
- * Login
+ * Login (simplified - no organization code needed)
  * POST /api/auth/login
  */
 router.post('/login', async (req, res) => {
     try {
-        const { username, password, organizationCode } = req.body;
+        const { username, password } = req.body;
 
         // Validate inputs
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        if (!organizationCode) {
-            return res.status(400).json({ error: 'Organization code is required' });
-        }
-
-        // Find organization
-        const organization = await Organization.findOne({
-            slug: organizationCode.toLowerCase().trim(),
-            isActive: true
-        });
-
-        if (!organization) {
-            return res.status(401).json({ error: 'Invalid organization code' });
-        }
-
-        // Find user scoped to this organization
+        // Find user by username (globally unique now)
         const user = await User.findOne({
             username: username.trim(),
-            organizationId: organization._id,
             isActive: true
-        });
+        }).populate('organizationId', 'name slug');
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -287,6 +271,27 @@ router.post('/login', async (req, res) => {
             }
 
             try {
+                // Ensure user has an organization (for users migrated from old schema)
+                if (!user.organizationId) {
+                    console.log('User missing organizationId, assigning default organization');
+                    let defaultOrg = await Organization.findOne({ slug: 'default' });
+
+                    if (!defaultOrg) {
+                        defaultOrg = new Organization({
+                            name: 'Default Organization',
+                            slug: 'default',
+                            type: 'college'
+                        });
+                        await defaultOrg.save();
+                    }
+
+                    user.organizationId = defaultOrg._id;
+                    await user.save();
+
+                    // Re-populate after assignment
+                    await user.populate('organizationId', 'name slug');
+                }
+
                 // Update last login
                 user.lastLogin = new Date();
                 await user.save();
@@ -302,9 +307,9 @@ router.post('/login', async (req, res) => {
                         username: user.username,
                         email: user.email,
                         role: user.role,
-                        organizationId: user.organizationId,
-                        organizationName: organization.name,
-                        organizationSlug: organization.slug,
+                        organizationId: user.organizationId._id,
+                        organizationName: user.organizationId.name,
+                        organizationSlug: user.organizationId.slug,
                         requiredAttendancePercentage: user.requiredAttendancePercentage || 75,
                         profile: user.profile
                     }

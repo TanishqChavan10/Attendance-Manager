@@ -10,8 +10,7 @@ import { toast } from "sonner";
 const Login = () => {
     const [formData, setFormData] = useState({
         username: "",
-        password: "",
-        organizationCode: "",
+        password: ""
     });
     const [error, setError] = useState(null);
     const { login, error: authError, loading, isAuthenticated } = useAuth();
@@ -38,7 +37,7 @@ const Login = () => {
         e.preventDefault();
         setError(null);
 
-        if (!formData.username || !formData.password || !formData.organizationCode) {
+        if (!formData.username || !formData.password) {
             toast.error("Please fill in all fields");
             return;
         }
@@ -104,23 +103,6 @@ const Login = () => {
                                 disabled={loading}
                                 className="bg-black/20 border-white/10 focus:border-indigo-500/50 focus:bg-black/30 transition-all h-11 text-slate-100 placeholder:text-slate-600"
                             />
-                        </div>
-
-                        <div className="space-y-2 group">
-                            <div className="flex items-center gap-2">
-                                <GraduationCap className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                                <Label htmlFor="organizationCode" className="text-slate-300 group-focus-within:text-indigo-400 transition-colors">Organization Code</Label>
-                            </div>
-                            <Input
-                                id="organizationCode"
-                                name="organizationCode"
-                                placeholder="e.g., abc-college"
-                                value={formData.organizationCode}
-                                onChange={handleChange}
-                                disabled={loading}
-                                className="bg-black/20 border-white/10 focus:border-indigo-500/50 focus:bg-black/30 transition-all h-11 text-slate-100 placeholder:text-slate-600"
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Enter your organization's unique code</p>
                         </div>
 
                         <Button type="submit" className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] mt-8" disabled={loading}>

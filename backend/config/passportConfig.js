@@ -4,37 +4,19 @@ const User = require('../models/User');
 const Organization = require('../models/Organization');
 
 /**
- * Custom authentication strategy for multi-tenant system
- * Usernames are unique per organization, not globally
+ * Authentication strategy for single-organization system
+ * Simplified from multi-tenant to single-tenant
  */
 passport.use(new LocalStrategy(
     {
         usernameField: 'username',
-        passwordField: 'password',
-        passReqToCallback: true // Pass req to access organizationCode
+        passwordField: 'password'
     },
-    async (req, username, password, done) => {
+    async (username, password, done) => {
         try {
-            const { organizationCode } = req.body;
-
-            if (!organizationCode) {
-                return done(null, false, { message: 'Organization code is required' });
-            }
-
-            // Find organization
-            const org = await Organization.findOne({
-                slug: organizationCode.toLowerCase().trim(),
-                isActive: true
-            });
-
-            if (!org) {
-                return done(null, false, { message: 'Invalid organization code' });
-            }
-
-            // Find user scoped to this organization
+            // Find user by username (globally unique now)
             const user = await User.findOne({
                 username: username.trim(),
-                organizationId: org._id,
                 isActive: true
             });
 

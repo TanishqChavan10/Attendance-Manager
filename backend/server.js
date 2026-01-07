@@ -88,7 +88,6 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/organization', organizationRoutes);
-app.use('/api/courses', courseRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/timetable', timetableRoutes);
 

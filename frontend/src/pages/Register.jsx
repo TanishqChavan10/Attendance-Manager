@@ -10,6 +10,7 @@ import { toast } from "sonner";
 const Register = () => {
     const [formData, setFormData] = useState({
         username: "",
+        email: "",
         password: "",
         confirmPassword: "",
         requiredAttendancePercentage: 75
@@ -62,7 +63,7 @@ const Register = () => {
         e.preventDefault();
         setError(null);
 
-        if (!formData.username || !formData.password || !formData.confirmPassword) {
+        if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
             toast.error("Please fill in all required fields");
             return;
         }
@@ -117,6 +118,23 @@ const Register = () => {
                                 name="username"
                                 placeholder="Enter your username"
                                 value={formData.username}
+                                onChange={handleChange}
+                                disabled={loading}
+                                className="bg-black/20 border-white/10 focus:border-indigo-500/50 focus:bg-black/30 transition-all h-11 text-slate-100 placeholder:text-slate-600"
+                            />
+                        </div>
+
+                        <div className="space-y-2 group">
+                            <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                                <Label htmlFor="email" className="text-slate-300 group-focus-within:text-indigo-400 transition-colors">Email</Label>
+                            </div>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Enter your email"
+                                value={formData.email}
                                 onChange={handleChange}
                                 disabled={loading}
                                 className="bg-black/20 border-white/10 focus:border-indigo-500/50 focus:bg-black/30 transition-all h-11 text-slate-100 placeholder:text-slate-600"
